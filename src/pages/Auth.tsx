@@ -42,23 +42,23 @@ export default function Auth() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden">
-      <SmokeBackground smokeColor="#2563EB" />
-      <Card className="relative z-10 w-full max-w-md border-border/50 bg-card/80 backdrop-blur-xl">
+    <div className="relative flex min-h-screen items-center justify-center bg-[hsl(220,20%,6%)] p-4 overflow-hidden">
+      <SmokeBackground smokeColor="#1e40af" />
+      <Card className="relative z-10 w-full max-w-md border-primary/20 bg-[hsl(220,25%,10%)]/90 backdrop-blur-xl shadow-2xl shadow-primary/10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">IV</div>
-          <CardTitle className="text-xl">{isLogin ? "Sign in to InvenTrack" : "Create an account"}</CardTitle>
-          <p className="text-sm text-muted-foreground">Inventory management made simple</p>
+          <CardTitle className="text-xl text-[hsl(210,20%,95%)]">{isLogin ? "Sign in to InvenTrack" : "Create an account"}</CardTitle>
+          <p className="text-sm text-[hsl(215,20%,55%)]">Inventory management made simple</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
-              <div className="space-y-2"><Label>Full Name</Label><Input placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required /></div>
+              <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Full Name</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required /></div>
             )}
-            <div className="space-y-2"><Label>Email</Label><Input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-            <div className="space-y-2"><Label>Password</Label><Input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} /></div>
+            <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Email</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+            <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Password</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} /></div>
             <Button className="w-full" type="submit" disabled={loading}>{loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}</Button>
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-sm text-[hsl(215,20%,55%)]">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
               <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary underline-offset-4 hover:underline">
                 {isLogin ? "Sign up" : "Sign in"}
