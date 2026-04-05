@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SmokeBackground } from "@/components/ui/spooky-smoke-animation";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
