@@ -44,7 +44,7 @@ export default function Auth() {
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4 overflow-hidden">
       <SmokeBackground smokeColor="#2563EB" />
-      <Card className="w-full max-w-md">
+      <Card className="relative z-10 w-full max-w-md border-border/50 bg-card/80 backdrop-blur-xl">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">IV</div>
           <CardTitle className="text-xl">{isLogin ? "Sign in to InvenTrack" : "Create an account"}</CardTitle>
