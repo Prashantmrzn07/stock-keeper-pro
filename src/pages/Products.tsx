@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Search, Plus, Download, Trash2, Edit2 } from "lucide-react";
+import { Search, Plus, Download, Trash2, Edit2, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,16 +26,11 @@ function ProductForm({ product, categories, suppliers, onSubmit, onCancel }: {
   onCancel: () => void;
 }) {
   const [form, setForm] = useState({
-    name: product?.name || "",
-    sku: product?.sku || generateSKU(),
-    category_id: product?.category_id || "",
-    supplier_id: product?.supplier_id || "",
-    description: product?.description || "",
-    unit_price: product?.unit_price || 0,
-    cost_price: product?.cost_price || 0,
-    stock: product?.stock || 0,
-    reorder_level: product?.reorder_level || 10,
-    image_url: product?.image_url || "",
+    name: product?.name || "", sku: product?.sku || generateSKU(),
+    category_id: product?.category_id || "", supplier_id: product?.supplier_id || "",
+    description: product?.description || "", unit_price: product?.unit_price || 0,
+    cost_price: product?.cost_price || 0, stock: product?.stock || 0,
+    reorder_level: product?.reorder_level || 10, image_url: product?.image_url || "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -76,7 +71,7 @@ function ProductForm({ product, categories, suppliers, onSubmit, onCancel }: {
       <div className="space-y-2"><Label>Description</Label><Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} /></div>
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-        <Button type="submit">{product ? "Update" : "Create"}</Button>
+        <Button type="submit">{product ? "Update Product" : "Create Product"}</Button>
       </div>
     </form>
   );
@@ -103,8 +98,8 @@ export default function Products() {
 
   const getStockBadge = (stock: number, reorder: number) => {
     if (stock === 0) return <Badge variant="destructive">Out of Stock</Badge>;
-    if (stock <= reorder) return <Badge variant="outline" className="border-warning text-warning">Low Stock</Badge>;
-    return <Badge variant="outline" className="border-success text-success">In Stock</Badge>;
+    if (stock <= reorder) return <Badge variant="outline" className="border-warning/50 text-warning bg-warning/5">Low Stock</Badge>;
+    return <Badge variant="outline" className="border-success/50 text-success bg-success/5">In Stock</Badge>;
   };
 
   const handleSubmit = (data: any) => {
@@ -129,14 +124,19 @@ export default function Products() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-muted-foreground">{filtered.length} products found</p>
+        <div className="page-header flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-lg shadow-primary/25">
+            <Package className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1>Products</h1>
+            <p>{filtered.length} products found</p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleExport}><Download className="mr-1 h-4 w-4" /> Export</Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditProduct(undefined); }}>
-            <DialogTrigger asChild><Button size="sm"><Plus className="mr-1 h-4 w-4" /> Add Product</Button></DialogTrigger>
+            <DialogTrigger asChild><Button size="sm" className="shadow-md shadow-primary/20"><Plus className="mr-1 h-4 w-4" /> Add Product</Button></DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader><DialogTitle>{editProduct ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
               <ProductForm product={editProduct} categories={categories} suppliers={suppliers} onSubmit={handleSubmit} onCancel={() => { setDialogOpen(false); setEditProduct(undefined); }} />
@@ -145,7 +145,7 @@ export default function Products() {
         </div>
       </div>
 
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
@@ -153,7 +153,7 @@ export default function Products() {
               <Input placeholder="Search by name or SKU..." className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-44"><SelectValue placeholder="Category" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
@@ -163,32 +163,34 @@ export default function Products() {
         </CardHeader>
         <CardContent className="p-0">
           {isLoading ? (
-            <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
+                <TableRow className="bg-muted/30 hover:bg-muted/30">
+                  <TableHead className="font-semibold">Product</TableHead>
+                  <TableHead className="font-semibold">SKU</TableHead>
+                  <TableHead className="text-right font-semibold">Price</TableHead>
+                  <TableHead className="text-right font-semibold">Stock</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="w-24 font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} className="group hover:bg-accent/50 transition-colors">
                     <TableCell className="font-medium">{p.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{p.sku}</TableCell>
-                    <TableCell className="text-right">${Number(p.unit_price).toFixed(2)}</TableCell>
-                    <TableCell className="text-right">{p.stock}</TableCell>
+                    <TableCell className="text-muted-foreground font-mono text-xs">{p.sku}</TableCell>
+                    <TableCell className="text-right font-medium">${Number(p.unit_price).toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={`font-semibold ${p.stock === 0 ? "text-destructive" : p.stock <= p.reorder_level ? "text-warning" : "text-foreground"}`}>{p.stock}</span>
+                    </TableCell>
                     <TableCell>{getStockBadge(p.stock, p.reorder_level)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditProduct(p); setDialogOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button>
                         <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader><AlertDialogTitle>Delete {p.name}?</AlertDialogTitle><AlertDialogDescription>This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
                             <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteProduct.mutate(p.id)}>Delete</AlertDialogAction></AlertDialogFooter>
@@ -198,7 +200,16 @@ export default function Products() {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filtered.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>}
+                {filtered.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <div className="empty-state">
+                        <Package className="empty-state-icon" />
+                        <p className="text-sm text-muted-foreground">No products found</p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           )}
