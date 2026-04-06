@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Plus, Mail, Phone, Edit2, Trash2 } from "lucide-react";
+import { Plus, Mail, Phone, Edit2, Trash2, Truck, MapPin, Building } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,12 +56,17 @@ export default function Suppliers() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Suppliers</h1>
-          <p className="text-muted-foreground">Manage your suppliers</p>
+        <div className="page-header flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-success shadow-lg shadow-success/25">
+            <Truck className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1>Suppliers</h1>
+            <p>{suppliers.length} supplier{suppliers.length !== 1 ? "s" : ""} registered</p>
+          </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditSupplier(undefined); }}>
-          <DialogTrigger asChild><Button size="sm" onClick={() => { setEditSupplier(undefined); setDialogOpen(true); }}><Plus className="mr-1 h-4 w-4" /> Add Supplier</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm" onClick={() => { setEditSupplier(undefined); setDialogOpen(true); }} className="shadow-md shadow-primary/20"><Plus className="mr-1 h-4 w-4" /> Add Supplier</Button></DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader><DialogTitle>{editSupplier ? "Edit Supplier" : "Add Supplier"}</DialogTitle></DialogHeader>
             <SupplierForm supplier={editSupplier} onSubmit={handleSubmit} onCancel={() => { setDialogOpen(false); setEditSupplier(undefined); }} />
@@ -68,35 +74,59 @@ export default function Suppliers() {
         </Dialog>
       </div>
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">{[1,2].map(i => <Skeleton key={i} className="h-40 w-full" />)}</div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-48 w-full rounded-xl" />)}</div>
+      ) : suppliers.length === 0 ? (
+        <Card className="shadow-sm">
+          <CardContent>
+            <div className="empty-state">
+              <Building className="empty-state-icon" />
+              <p className="text-sm text-muted-foreground">No suppliers yet</p>
+              <Button size="sm" className="mt-3" onClick={() => setDialogOpen(true)}><Plus className="mr-1 h-4 w-4" /> Add your first supplier</Button>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {suppliers.map((s) => (
-            <Card key={s.id}>
-              <CardContent className="p-5">
-                <div className="flex justify-between">
-                  <h3 className="font-semibold text-lg">{s.name}</h3>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditSupplier(s); setDialogOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader><AlertDialogTitle>Delete "{s.name}"?</AlertDialogTitle><AlertDialogDescription>This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
-                        <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteSupplier.mutate(s.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {suppliers.map((s) => {
+            const count = products.filter(p => p.supplier_id === s.id).length;
+            return (
+              <Card key={s.id} className="group shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden">
+                <CardContent className="p-5 relative">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success shrink-0">
+                        <Building className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold truncate">{s.name}</h3>
+                        {s.contact && <p className="text-xs text-muted-foreground">{s.contact}</p>}
+                      </div>
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditSupplier(s); setDialogOpen(true); }}><Edit2 className="h-3.5 w-3.5" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>Delete "{s.name}"?</AlertDialogTitle><AlertDialogDescription>This cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteSupplier.mutate(s.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </div>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">Contact: {s.contact}</p>
-                <div className="space-y-1 text-sm">
-                  {s.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5" />{s.email}</div>}
-                  {s.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5" />{s.phone}</div>}
-                </div>
-                <p className="mt-3 text-xs text-muted-foreground">{products.filter(p => p.supplier_id === s.id).length} products linked</p>
-              </CardContent>
-            </Card>
-          ))}
-          {suppliers.length === 0 && <p className="text-muted-foreground col-span-2 text-center py-8">No suppliers yet</p>}
+                  <div className="mt-4 space-y-2 text-sm">
+                    {s.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{s.email}</span></div>}
+                    {s.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" />{s.phone}</div>}
+                    {s.address && <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{s.address}</span></div>}
+                  </div>
+                  <div className="flex items-center gap-2 mt-4">
+                    <Badge variant="secondary" className="text-xs">{count} product{count !== 1 ? "s" : ""}</Badge>
+                    {s.payment_terms && <Badge variant="outline" className="text-xs">{s.payment_terms}</Badge>}
+                  </div>
+                  <div className="absolute bottom-0 left-0 h-1 w-full gradient-success opacity-40" />
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Plus, Edit2, Trash2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Tags, FolderOpen } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -38,12 +38,17 @@ export default function Categories() {
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">Manage product categories</p>
+        <div className="page-header flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-purple shadow-lg shadow-[hsl(280,65%,60%)]/25">
+            <Tags className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h1>Categories</h1>
+            <p>Organize products by category</p>
+          </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild><Button size="sm" onClick={openCreate}><Plus className="mr-1 h-4 w-4" /> Add Category</Button></DialogTrigger>
+          <DialogTrigger asChild><Button size="sm" onClick={openCreate} className="shadow-md shadow-primary/20"><Plus className="mr-1 h-4 w-4" /> Add Category</Button></DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>{editCat ? "Edit Category" : "Add Category"}</DialogTitle></DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -57,46 +62,57 @@ export default function Categories() {
           </DialogContent>
         </Dialog>
       </div>
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Products</TableHead>
-                  <TableHead className="w-24">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {categories.map((c) => (
-                  <TableRow key={c.id}>
-                    <TableCell className="font-medium">{c.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{c.description}</TableCell>
-                    <TableCell className="text-right">{products.filter(p => p.category_id === c.id).length}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Edit2 className="h-3.5 w-3.5" /></Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Delete "{c.name}"?</AlertDialogTitle><AlertDialogDescription>Products in this category will become uncategorized.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteCat.mutate(c.id)}>Delete</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+
+      {isLoading ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}</div>
+      ) : categories.length === 0 ? (
+        <Card className="shadow-sm">
+          <CardContent>
+            <div className="empty-state">
+              <FolderOpen className="empty-state-icon" />
+              <p className="text-sm text-muted-foreground">No categories yet</p>
+              <Button size="sm" className="mt-3" onClick={openCreate}><Plus className="mr-1 h-4 w-4" /> Create your first category</Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((c) => {
+            const count = products.filter(p => p.category_id === c.id).length;
+            return (
+              <Card key={c.id} className="group shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden">
+                <CardContent className="p-5 relative">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <Tags className="h-5 w-5" />
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {categories.length === 0 && <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">No categories yet</TableCell></TableRow>}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      <div>
+                        <h3 className="font-semibold">{c.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1">{c.description || "No description"}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Edit2 className="h-3.5 w-3.5" /></Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader><AlertDialogTitle>Delete "{c.name}"?</AlertDialogTitle><AlertDialogDescription>Products in this category will become uncategorized.</AlertDialogDescription></AlertDialogHeader>
+                          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => deleteCat.mutate(c.id)}>Delete</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mt-4">
+                    <Badge variant="secondary" className="text-xs">{count} product{count !== 1 ? "s" : ""}</Badge>
+                  </div>
+                  <div className="absolute bottom-0 left-0 h-1 w-full gradient-purple opacity-40" />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

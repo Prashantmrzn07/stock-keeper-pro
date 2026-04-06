@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Scan, Search } from "lucide-react";
+import { Scan, Search, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useProducts } from "@/hooks/useProducts";
 import { toast } from "sonner";
 
@@ -24,31 +25,75 @@ export default function BarcodeScanner() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div><h1 className="text-2xl font-bold">Barcode Scanner</h1><p className="text-muted-foreground">Scan or enter a barcode to look up products</p></div>
+      <div className="page-header flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-info shadow-lg shadow-info/25">
+          <Scan className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <div>
+          <h1>Barcode Scanner</h1>
+          <p>Scan or enter a barcode to look up products</p>
+        </div>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Scan className="h-4 w-4" /> Scan Barcode</CardTitle></CardHeader>
+        <Card className="shadow-sm overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Scan className="h-4 w-4 text-muted-foreground" /> Camera Scanner
+            </CardTitle>
+          </CardHeader>
           <CardContent>
-            <div className="flex h-48 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground">
-              <div className="text-center"><Scan className="mx-auto mb-2 h-10 w-10" /><p className="text-sm">Camera scanner coming soon</p></div>
+            <div className="flex h-52 items-center justify-center rounded-xl border-2 border-dashed border-border/60 bg-muted/20">
+              <div className="text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary mx-auto mb-3">
+                  <Scan className="h-7 w-7" />
+                </div>
+                <p className="text-sm font-medium">Camera scanner</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Coming soon</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader><CardTitle className="text-base flex items-center gap-2"><Search className="h-4 w-4" /> Manual Lookup</CardTitle></CardHeader>
+
+        <Card className="shadow-sm overflow-hidden">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" /> Manual Lookup
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-4">
-            <Input placeholder="Enter SKU..." value={lookup} onChange={e => setLookup(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLookup()} />
-            <Button className="w-full" onClick={handleLookup}>Look Up Product</Button>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="Enter SKU..." className="pl-9" value={lookup} onChange={e => setLookup(e.target.value)} onKeyDown={e => e.key === "Enter" && handleLookup()} />
+            </div>
+            <Button className="w-full shadow-md shadow-primary/20" onClick={handleLookup}>Look Up Product</Button>
             {foundProduct && (
-              <div className="rounded-lg border p-4 space-y-2">
-                <div className="flex justify-between"><span className="font-semibold">{foundProduct.name}</span>
-                  <Badge variant={foundProduct.stock === 0 ? "destructive" : foundProduct.stock <= foundProduct.reorder_level ? "outline" : "default"} className={foundProduct.stock > 0 && foundProduct.stock <= foundProduct.reorder_level ? "border-warning text-warning" : foundProduct.stock > foundProduct.reorder_level ? "bg-success" : ""}>
+              <div className="rounded-xl border border-border/50 p-4 space-y-3 bg-muted/20">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Package className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">{foundProduct.name}</p>
+                      <p className="text-xs text-muted-foreground font-mono">{foundProduct.sku}</p>
+                    </div>
+                  </div>
+                  <Badge variant={foundProduct.stock === 0 ? "destructive" : foundProduct.stock <= foundProduct.reorder_level ? "outline" : "default"}
+                    className={foundProduct.stock > 0 && foundProduct.stock <= foundProduct.reorder_level ? "border-warning/50 text-warning bg-warning/5" : foundProduct.stock > foundProduct.reorder_level ? "bg-success" : ""}>
                     {foundProduct.stock === 0 ? "Out of Stock" : foundProduct.stock <= foundProduct.reorder_level ? "Low Stock" : "In Stock"}
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">SKU: {foundProduct.sku}</p>
-                <p className="text-sm">Stock: <span className="font-medium">{foundProduct.stock}</span></p>
-                <p className="text-sm">Price: <span className="font-medium">${Number(foundProduct.unit_price).toFixed(2)}</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-background p-3">
+                    <p className="text-xs text-muted-foreground">Stock</p>
+                    <p className="text-lg font-bold">{foundProduct.stock}</p>
+                  </div>
+                  <div className="rounded-lg bg-background p-3">
+                    <p className="text-xs text-muted-foreground">Price</p>
+                    <p className="text-lg font-bold">${Number(foundProduct.unit_price).toFixed(2)}</p>
+                  </div>
+                </div>
               </div>
             )}
           </CardContent>

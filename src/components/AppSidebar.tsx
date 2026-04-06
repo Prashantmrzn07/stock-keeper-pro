@@ -14,11 +14,11 @@ import {
 const mainNav = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Products", url: "/products", icon: Package },
-  { title: "Stock Management", url: "/stock", icon: ArrowLeftRight },
+  { title: "Stock", url: "/stock", icon: ArrowLeftRight },
   { title: "Categories", url: "/categories", icon: Tags },
   { title: "Suppliers", url: "/suppliers", icon: Truck },
-  { title: "Low Stock Alerts", url: "/low-stock", icon: AlertTriangle },
-  { title: "Barcode Scanner", url: "/barcode", icon: Scan },
+  { title: "Low Stock", url: "/low-stock", icon: AlertTriangle },
+  { title: "Scanner", url: "/barcode", icon: Scan },
   { title: "Sales", url: "/sales", icon: ShoppingCart },
   { title: "Reports", url: "/reports", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
@@ -39,19 +39,26 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-sm font-bold">IV</div>
-          {!collapsed && <span className="text-lg font-semibold text-sidebar-foreground">InvenTrack</span>}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/25">
+            IV
+          </div>
+          {!collapsed && (
+            <div>
+              <span className="text-base font-bold text-sidebar-foreground tracking-tight">InvenTrack</span>
+              <p className="text-[10px] text-sidebar-muted leading-none">Inventory System</p>
+            </div>
+          )}
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
+                    <NavLink to={item.url} end={item.url === "/"} className="hover:bg-sidebar-accent rounded-lg transition-colors" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                       <item.icon className="mr-2 h-4 w-4 shrink-0" />
                       {!collapsed && <span>{item.title}</span>}
                     </NavLink>
@@ -63,11 +70,18 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-3">
-        {!collapsed && user && <p className="text-xs text-sidebar-muted mb-2 px-2 truncate">{user.email}</p>}
+        {!collapsed && user && (
+          <div className="flex items-center gap-2 px-2 mb-2">
+            <div className="h-6 w-6 rounded-lg bg-sidebar-accent flex items-center justify-center text-[10px] font-semibold text-sidebar-foreground">
+              {user.email?.substring(0, 1).toUpperCase()}
+            </div>
+            <p className="text-xs text-sidebar-muted truncate flex-1">{user.email}</p>
+          </div>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild>
-              <button onClick={handleSignOut} className="flex items-center gap-2 text-sidebar-muted hover:text-sidebar-foreground w-full">
+              <button onClick={handleSignOut} className="flex items-center gap-2 text-sidebar-muted hover:text-sidebar-foreground w-full rounded-lg transition-colors">
                 <LogOut className="h-4 w-4 shrink-0" />
                 {!collapsed && <span>Sign Out</span>}
               </button>
