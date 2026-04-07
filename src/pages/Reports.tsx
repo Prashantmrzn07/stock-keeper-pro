@@ -61,9 +61,9 @@ export default function Reports() {
   ];
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in page-bg-glow">
       <div className="page-header flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-lg shadow-primary/25">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-lg shadow-primary/25 icon-float">
           <FileSpreadsheet className="h-5 w-5 text-primary-foreground" />
         </div>
         <div>

@@ -163,7 +163,7 @@
   }
 
   .page-header {
-    @apply relative pb-2;
+    @apply relative pb-4;
   }
 
   .page-header h1 {
@@ -172,6 +172,49 @@
 
   .page-header p {
     @apply text-muted-foreground mt-0.5;
+  }
+
+  .page-bg-glow {
+    position: relative;
+  }
+
+  .page-bg-glow::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.08), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .page-bg-glow::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -40px;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: radial-gradient(circle, hsl(var(--success) / 0.06), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .icon-float {
+    animation: icon-float 3s ease-in-out infinite;
+  }
+
+  @keyframes icon-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .icon-glow {
+    filter: drop-shadow(0 0 8px currentColor);
   }
 
   .table-container {
