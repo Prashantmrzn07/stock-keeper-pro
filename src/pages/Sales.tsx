@@ -146,7 +146,7 @@ export default function Sales() {
                   </div>
                 </div>
                 );
-              )}
+              })}
               <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="mr-1 h-3 w-3" /> Add Item</Button>
             </div>
             <div className="flex items-center justify-between pt-2 border-t">
