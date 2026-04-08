@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStockMovements, useCreateStockMovement } from "@/hooks/useStockMovements";
 import { useProducts } from "@/hooks/useProducts";
+import { useSuppliers } from "@/hooks/useSuppliers";
 
 export default function Stock() {
   const [dialogOpen, setDialogOpen] = useState(false);

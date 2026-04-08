@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSales, useCreateSale, useUpdateSaleStatus } from "@/hooks/useSales";
 import { useProducts } from "@/hooks/useProducts";
 
-interface SaleLineItem { product_id: string; quantity: number; unit_price: number; }
+interface SaleLineItem { product_id: string; quantity: number; unit_price: number; discount: number; }
 
 export default function Sales() {
   const [dialogOpen, setDialogOpen] = useState(false);
