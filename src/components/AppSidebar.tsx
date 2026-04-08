@@ -39,12 +39,10 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-primary text-primary-foreground text-sm font-bold shadow-lg shadow-primary/25">
-            IV
-          </div>
+          <img src="/stockflow-logo.png" alt="StockFlow" className="h-9 w-9 shrink-0 rounded-xl shadow-lg shadow-primary/25" />
           {!collapsed && (
             <div>
-              <span className="text-base font-bold text-sidebar-foreground tracking-tight">InvenTrack</span>
+              <span className="text-base font-bold text-sidebar-foreground tracking-tight">StockFlow</span>
               <p className="text-[10px] text-sidebar-muted leading-none">Inventory System</p>
             </div>
           )}

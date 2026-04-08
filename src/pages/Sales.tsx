@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, DollarSign, ShoppingCart, TrendingUp } from "lucide-react";
+import { Plus, DollarSign, ShoppingCart, TrendingUp, Percent } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ export default function Sales() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
-  const [items, setItems] = useState<SaleLineItem[]>([{ product_id: "", quantity: 1, unit_price: 0 }]);
+  const [items, setItems] = useState<SaleLineItem[]>([{ product_id: "", quantity: 1, unit_price: 0, discount: 0 }]);
 
   const { data: sales = [], isLoading } = useSales();
   const { data: products = [] } = useProducts();
@@ -28,7 +28,7 @@ export default function Sales() {
   const totalRevenue = sales.reduce((s: number, sale: any) => s + Number(sale.total_amount), 0);
   const avgOrder = sales.length > 0 ? totalRevenue / sales.length : 0;
 
-  const addItem = () => setItems(i => [...i, { product_id: "", quantity: 1, unit_price: 0 }]);
+  const addItem = () => setItems(i => [...i, { product_id: "", quantity: 1, unit_price: 0, discount: 0 }]);
   const updateItem = (idx: number, field: string, value: any) => {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
@@ -42,14 +42,26 @@ export default function Sales() {
   };
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
 
-  const total = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const getDiscountedPrice = (item: SaleLineItem) => {
+    const discountMultiplier = 1 - (item.discount / 100);
+    return item.unit_price * discountMultiplier;
+  };
+
+  const getItemTotal = (item: SaleLineItem) => item.quantity * getDiscountedPrice(item);
+  const total = items.reduce((s, i) => s + getItemTotal(i), 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const validItems = items.filter(i => i.product_id);
     if (validItems.length === 0) return;
-    createSale.mutate({ customer_name: customerName, payment_status: paymentStatus, items: validItems }, {
-      onSuccess: () => { setDialogOpen(false); setCustomerName(""); setItems([{ product_id: "", quantity: 1, unit_price: 0 }]); }
+    // Pass discounted prices to the sale
+    const saleItems = validItems.map(i => ({
+      product_id: i.product_id,
+      quantity: i.quantity,
+      unit_price: getDiscountedPrice(i),
+    }));
+    createSale.mutate({ customer_name: customerName, payment_status: paymentStatus, items: saleItems }, {
+      onSuccess: () => { setDialogOpen(false); setCustomerName(""); setItems([{ product_id: "", quantity: 1, unit_price: 0, discount: 0 }]); }
     });
   };
 
@@ -108,16 +120,37 @@ export default function Sales() {
             <div className="space-y-3">
               <Label>Items</Label>
               {items.map((item, idx) => (
-                <div key={idx} className="flex gap-2 items-end rounded-lg border border-border/50 p-3 bg-muted/20">
-                  <div className="flex-1">
-                    <Select value={item.product_id} onValueChange={v => updateItem(idx, "product_id", v)}>
-                      <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-                      <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
-                    </Select>
+                <div key={idx} className="rounded-lg border border-border/50 p-3 bg-muted/20 space-y-2">
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground">Product</Label>
+                      <Select value={item.product_id} onValueChange={v => updateItem(idx, "product_id", v)}>
+                        <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                        <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="w-20">
+                      <Label className="text-xs text-muted-foreground">Qty</Label>
+                      <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(idx, "quantity", parseInt(e.target.value) || 1)} />
+                    </div>
+                    <div className="w-28">
+                      <Label className="text-xs text-muted-foreground">Price</Label>
+                      <Input type="number" step="0.01" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseFloat(e.target.value) || 0)} />
+                    </div>
+                    <div className="w-20">
+                      <Label className="text-xs text-muted-foreground flex items-center gap-1"><Percent className="h-3 w-3" /> Disc</Label>
+                      <Input type="number" min={0} max={100} value={item.discount} onChange={e => updateItem(idx, "discount", parseFloat(e.target.value) || 0)} />
+                    </div>
+                    {items.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>×</Button>}
                   </div>
-                  <Input type="number" min={1} className="w-20" value={item.quantity} onChange={e => updateItem(idx, "quantity", parseInt(e.target.value) || 1)} />
-                  <Input type="number" step="0.01" className="w-28" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseFloat(e.target.value) || 0)} />
-                  {items.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>×</Button>}
+                  {item.discount > 0 && item.unit_price > 0 && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-muted-foreground line-through">${item.unit_price.toFixed(2)}</span>
+                      <span className="text-success font-semibold">${getDiscountedPrice(item).toFixed(2)}</span>
+                      <Badge variant="outline" className="text-[10px] border-success/30 text-success bg-success/5">-{item.discount}%</Badge>
+                      <span className="ml-auto font-medium">Subtotal: ${getItemTotal(item).toFixed(2)}</span>
+                    </div>
+                  )}
                 </div>
               ))}
               <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="mr-1 h-3 w-3" /> Add Item</Button>
