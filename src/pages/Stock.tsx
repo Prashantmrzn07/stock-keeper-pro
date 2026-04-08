@@ -11,7 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStockMovements, useCreateStockMovement } from "@/hooks/useStockMovements";
 import { useProducts } from "@/hooks/useProducts";
-import { useSuppliers } from "@/hooks/useSuppliers";
 
 export default function Stock() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -21,21 +20,17 @@ export default function Stock() {
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
-  const [supplierId, setSupplierId] = useState("");
-
   const { data: movements = [], isLoading } = useStockMovements();
   const { data: products = [] } = useProducts();
-  const { data: suppliers = [] } = useSuppliers();
   const createMovement = useCreateStockMovement();
 
   const openDialog = (type: "in" | "out" | "adjustment") => {
-    setMoveType(type); setProductId(""); setQuantity(0); setReason(""); setNotes(""); setSupplierId(""); setDialogOpen(true);
+    setMoveType(type); setProductId(""); setQuantity(0); setReason(""); setNotes(""); setDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalNotes = supplierId ? `${notes} | Supplier: ${suppliers.find(s => s.id === supplierId)?.name || ''}`.trim() : notes;
-    createMovement.mutate({ product_id: productId, type: moveType, quantity, reason, notes: finalNotes }, { onSuccess: () => setDialogOpen(false) });
+    createMovement.mutate({ product_id: productId, type: moveType, quantity, reason, notes }, { onSuccess: () => setDialogOpen(false) });
   };
 
   return (
@@ -69,28 +64,13 @@ export default function Stock() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label>Product</Label>
-              <Select value={productId} onValueChange={(v) => {
-                setProductId(v);
-                const p = products.find(p => p.id === v);
-                if (p?.supplier_id) setSupplierId(p.supplier_id);
-              }}>
+              <Select value={productId} onValueChange={setProductId}>
                 <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
                 <SelectContent>
-                  {(supplierId ? products.filter(p => !p.supplier_id || p.supplier_id === supplierId) : products).map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>)}
+                  {products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.sku})</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            {moveType === "in" && (
-              <div className="space-y-2">
-                <Label>Supplier</Label>
-                <Select value={supplierId} onValueChange={setSupplierId}>
-                  <SelectTrigger><SelectValue placeholder="Select supplier (optional)" /></SelectTrigger>
-                  <SelectContent>
-                    {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="space-y-2"><Label>{moveType === "adjustment" ? "New Stock Level" : "Quantity"}</Label><Input type="number" min={1} value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 0)} required /></div>
             {moveType === "out" && (
               <div className="space-y-2">

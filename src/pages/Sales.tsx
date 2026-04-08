@@ -12,13 +12,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSales, useCreateSale, useUpdateSaleStatus } from "@/hooks/useSales";
 import { useProducts } from "@/hooks/useProducts";
 
-interface SaleLineItem { product_id: string; quantity: number; unit_price: number; discount: number; }
+interface SaleLineItem { product_id: string; quantity: number; unit_price: number; }
 
 export default function Sales() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
-  const [items, setItems] = useState<SaleLineItem[]>([{ product_id: "", quantity: 1, unit_price: 0, discount: 0 }]);
+  const [items, setItems] = useState<SaleLineItem[]>([{ product_id: "", quantity: 1, unit_price: 0 }]);
 
   const { data: sales = [], isLoading } = useSales();
   const { data: products = [] } = useProducts();
@@ -28,7 +28,7 @@ export default function Sales() {
   const totalRevenue = sales.reduce((s: number, sale: any) => s + Number(sale.total_amount), 0);
   const avgOrder = sales.length > 0 ? totalRevenue / sales.length : 0;
 
-  const addItem = () => setItems(i => [...i, { product_id: "", quantity: 1, unit_price: 0, discount: 0 }]);
+  const addItem = () => setItems(i => [...i, { product_id: "", quantity: 1, unit_price: 0 }]);
   const updateItem = (idx: number, field: string, value: any) => {
     setItems(prev => prev.map((item, i) => {
       if (i !== idx) return item;
@@ -42,16 +42,14 @@ export default function Sales() {
   };
   const removeItem = (idx: number) => setItems(prev => prev.filter((_, i) => i !== idx));
 
-  const getDiscountedPrice = (item: SaleLineItem) => item.unit_price * (1 - item.discount / 100);
-  const total = items.reduce((s, i) => s + i.quantity * getDiscountedPrice(i), 0);
+  const total = items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const validItems = items.filter(i => i.product_id);
     if (validItems.length === 0) return;
-    const saleItems = validItems.map(i => ({ product_id: i.product_id, quantity: i.quantity, unit_price: getDiscountedPrice(i) }));
-    createSale.mutate({ customer_name: customerName, payment_status: paymentStatus, items: saleItems }, {
-      onSuccess: () => { setDialogOpen(false); setCustomerName(""); setItems([{ product_id: "", quantity: 1, unit_price: 0, discount: 0 }]); }
+    createSale.mutate({ customer_name: customerName, payment_status: paymentStatus, items: validItems }, {
+      onSuccess: () => { setDialogOpen(false); setCustomerName(""); setItems([{ product_id: "", quantity: 1, unit_price: 0 }]); }
     });
   };
 
@@ -109,44 +107,19 @@ export default function Sales() {
             </div>
             <div className="space-y-3">
               <Label>Items</Label>
-              {items.map((item, idx) => {
-                const discounted = getDiscountedPrice(item);
-                return (
-                <div key={idx} className="rounded-lg border border-border/50 p-3 bg-muted/20 space-y-2">
-                  <div className="flex gap-2 items-end">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground">Product</Label>
-                      <Select value={item.product_id} onValueChange={v => updateItem(idx, "product_id", v)}>
-                        <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
-                        <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    {items.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>×</Button>}
+              {items.map((item, idx) => (
+                <div key={idx} className="flex gap-2 items-end rounded-lg border border-border/50 p-3 bg-muted/20">
+                  <div className="flex-1">
+                    <Select value={item.product_id} onValueChange={v => updateItem(idx, "product_id", v)}>
+                      <SelectTrigger><SelectValue placeholder="Select product" /></SelectTrigger>
+                      <SelectContent>{products.map(p => <SelectItem key={p.id} value={p.id}>{p.name} (Stock: {p.stock})</SelectItem>)}</SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex gap-2 items-end">
-                    <div className="w-20">
-                      <Label className="text-xs text-muted-foreground">Qty</Label>
-                      <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(idx, "quantity", parseInt(e.target.value) || 1)} />
-                    </div>
-                    <div className="w-28">
-                      <Label className="text-xs text-muted-foreground">Unit Price</Label>
-                      <Input type="number" step="0.01" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseFloat(e.target.value) || 0)} />
-                    </div>
-                    <div className="w-24">
-                      <Label className="text-xs text-muted-foreground">Discount %</Label>
-                      <Input type="number" min={0} max={100} value={item.discount} onChange={e => updateItem(idx, "discount", parseFloat(e.target.value) || 0)} />
-                    </div>
-                    <div className="w-28 text-right">
-                      <Label className="text-xs text-muted-foreground">Final Price</Label>
-                      <p className="text-sm font-bold text-primary py-2">
-                        ${(discounted * item.quantity).toFixed(2)}
-                        {item.discount > 0 && <span className="text-xs line-through text-muted-foreground ml-1">${(item.unit_price * item.quantity).toFixed(2)}</span>}
-                      </p>
-                    </div>
-                  </div>
+                  <Input type="number" min={1} className="w-20" value={item.quantity} onChange={e => updateItem(idx, "quantity", parseInt(e.target.value) || 1)} />
+                  <Input type="number" step="0.01" className="w-28" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseFloat(e.target.value) || 0)} />
+                  {items.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>×</Button>}
                 </div>
-                );
-              })}
+              ))}
               <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="mr-1 h-3 w-3" /> Add Item</Button>
             </div>
             <div className="flex items-center justify-between pt-2 border-t">
