@@ -63,7 +63,10 @@ export function AppLayout() {
                 <PopoverContent align="end" className="w-80 p-0 shadow-xl">
                   <div className="p-3 border-b">
                     <p className="text-sm font-semibold">Notifications</p>
-                    <p className="text-xs text-muted-foreground">{alertCount} stock alert{alertCount !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lowStockItems.length} stock alert{lowStockItems.length !== 1 ? "s" : ""}
+                      {recentArrivals.length > 0 && ` · ${recentArrivals.length} arrival${recentArrivals.length !== 1 ? "s" : ""}`}
+                    </p>
                   </div>
                   <div className="max-h-64 overflow-auto">
                     {alertCount === 0 ? (
