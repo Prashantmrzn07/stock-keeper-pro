@@ -98,6 +98,23 @@ export function AppLayout() {
                             <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">{p.stock}</Badge>
                           </button>
                         ))}
+                        {recentArrivals.length > 0 && (
+                          <>
+                            <div className="px-3 py-1.5 bg-success/5 border-t border-b border-success/10">
+                              <p className="text-[10px] font-semibold text-success uppercase tracking-wider">Stock Arrivals (24h)</p>
+                            </div>
+                            {recentArrivals.map((m: any) => (
+                              <button key={m.id} onClick={() => navigate("/stock")} className="flex items-start gap-3 w-full p-3 hover:bg-accent/50 text-left transition-colors">
+                                <ArrowDown className="h-4 w-4 mt-0.5 text-success shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">{m.products?.name || "Product"}</p>
+                                  <p className="text-xs text-success">+{m.quantity} units arrived</p>
+                                </div>
+                                <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] bg-success/10 text-success border-success/20">+{m.quantity}</Badge>
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </>
                     )}
                   </div>
