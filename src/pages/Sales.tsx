@@ -250,7 +250,7 @@ export default function Sales() {
                   <>
                     <Button variant="outline" size="sm" onClick={() => setEditingSale(null)}>Cancel</Button>
                     <Button size="sm" onClick={() => {
-                      updateStatus.mutate({ id: editingSale.id, payment_status: editingSale.payment_status });
+                      updateStatus.mutate({ id: editingSale.id, payment_status: editingSale.payment_status, customer_name: editingSale.customer_name });
                       setDetailSale({ ...detailSale, payment_status: editingSale.payment_status, customer_name: editingSale.customer_name });
                       setEditingSale(null);
                     }}>Save</Button>
