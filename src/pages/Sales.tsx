@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, DollarSign, ShoppingCart, TrendingUp, Percent } from "lucide-react";
+import { Plus, DollarSign, ShoppingCart, TrendingUp, Percent, Eye, Pencil, X } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { useSales, useCreateSale, useUpdateSaleStatus } from "@/hooks/useSales";
 import { useProducts } from "@/hooks/useProducts";
 
@@ -16,6 +17,8 @@ interface SaleLineItem { product_id: string; quantity: number; unit_price: numbe
 
 export default function Sales() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [detailSale, setDetailSale] = useState<any>(null);
+  const [editingSale, setEditingSale] = useState<any>(null);
   const [customerName, setCustomerName] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
   const [items, setItems] = useState<SaleLineItem[]>([{ product_id: "", quantity: 1, unit_price: 0, discount: 0 }]);
@@ -35,7 +38,7 @@ export default function Sales() {
       const updated = { ...item, [field]: value };
       if (field === "product_id") {
         const p = products.find(p => p.id === value);
-        if (p) updated.unit_price = Number(p.unit_price);
+        if (p) updated.unit_price = Math.round(Number(p.unit_price));
       }
       return updated;
     }));
@@ -44,7 +47,7 @@ export default function Sales() {
 
   const getDiscountedPrice = (item: SaleLineItem) => {
     const discountMultiplier = 1 - (item.discount / 100);
-    return item.unit_price * discountMultiplier;
+    return Math.round(item.unit_price * discountMultiplier);
   };
 
   const getItemTotal = (item: SaleLineItem) => item.quantity * getDiscountedPrice(item);
@@ -54,7 +57,6 @@ export default function Sales() {
     e.preventDefault();
     const validItems = items.filter(i => i.product_id);
     if (validItems.length === 0) return;
-    // Pass discounted prices to the sale
     const saleItems = validItems.map(i => ({
       product_id: i.product_id,
       quantity: i.quantity,
@@ -65,10 +67,15 @@ export default function Sales() {
     });
   };
 
+  const getProductName = (productId: string) => {
+    const p = products.find(p => p.id === productId);
+    return p?.name || "Unknown";
+  };
+
   const metrics = [
-    { title: "Total Revenue", value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, iconBg: "bg-success/10 text-success", gradient: "gradient-success" },
+    { title: "Total Revenue", value: `$${Math.round(totalRevenue)}`, icon: DollarSign, iconBg: "bg-success/10 text-success", gradient: "gradient-success" },
     { title: "Total Orders", value: sales.length, icon: ShoppingCart, iconBg: "bg-primary/10 text-primary", gradient: "gradient-primary" },
-    { title: "Avg Order Value", value: `$${avgOrder.toFixed(2)}`, icon: TrendingUp, iconBg: "bg-warning/10 text-warning", gradient: "gradient-warning" },
+    { title: "Avg Order Value", value: `$${Math.round(avgOrder)}`, icon: TrendingUp, iconBg: "bg-warning/10 text-warning", gradient: "gradient-warning" },
   ];
 
   return (
@@ -103,6 +110,7 @@ export default function Sales() {
         ))}
       </div>
 
+      {/* New Sale Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader><DialogTitle>New Sale</DialogTitle></DialogHeader>
@@ -134,21 +142,25 @@ export default function Sales() {
                       <Input type="number" min={1} value={item.quantity} onChange={e => updateItem(idx, "quantity", parseInt(e.target.value) || 1)} />
                     </div>
                     <div className="w-28">
-                      <Label className="text-xs text-muted-foreground">Price</Label>
-                      <Input type="number" step="0.01" value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseFloat(e.target.value) || 0)} />
+                      <Label className="text-xs text-muted-foreground">Unit Price</Label>
+                      <Input type="number" min={0} value={item.unit_price} onChange={e => updateItem(idx, "unit_price", parseInt(e.target.value) || 0)} />
                     </div>
                     <div className="w-20">
                       <Label className="text-xs text-muted-foreground flex items-center gap-1"><Percent className="h-3 w-3" /> Disc</Label>
-                      <Input type="number" min={0} max={100} value={item.discount} onChange={e => updateItem(idx, "discount", parseFloat(e.target.value) || 0)} />
+                      <Input type="number" min={0} max={100} value={item.discount} onChange={e => updateItem(idx, "discount", parseInt(e.target.value) || 0)} />
                     </div>
                     {items.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>×</Button>}
                   </div>
-                  {item.discount > 0 && item.unit_price > 0 && (
+                  {item.unit_price > 0 && (
                     <div className="flex items-center gap-2 text-xs">
-                      <span className="text-muted-foreground line-through">${item.unit_price.toFixed(2)}</span>
-                      <span className="text-success font-semibold">${getDiscountedPrice(item).toFixed(2)}</span>
-                      <Badge variant="outline" className="text-[10px] border-success/30 text-success bg-success/5">-{item.discount}%</Badge>
-                      <span className="ml-auto font-medium">Subtotal: ${getItemTotal(item).toFixed(2)}</span>
+                      {item.discount > 0 && (
+                        <>
+                          <span className="text-muted-foreground line-through">${item.unit_price}</span>
+                          <span className="text-success font-semibold">${getDiscountedPrice(item)}</span>
+                          <Badge variant="outline" className="text-[10px] border-success/30 text-success bg-success/5">-{item.discount}%</Badge>
+                        </>
+                      )}
+                      <span className="ml-auto font-medium">Subtotal: ${getItemTotal(item)}</span>
                     </div>
                   )}
                 </div>
@@ -156,13 +168,101 @@ export default function Sales() {
               <Button type="button" variant="outline" size="sm" onClick={addItem}><Plus className="mr-1 h-3 w-3" /> Add Item</Button>
             </div>
             <div className="flex items-center justify-between pt-2 border-t">
-              <p className="text-lg font-bold">Total: ${total.toFixed(2)}</p>
+              <div>
+                <p className="text-lg font-bold">Total: ${total}</p>
+                {items.some(i => i.discount > 0) && (
+                  <p className="text-xs text-muted-foreground">
+                    Before discount: ${items.reduce((s, i) => s + i.quantity * i.unit_price, 0)}
+                  </p>
+                )}
+              </div>
               <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
                 <Button type="submit">Create Sale</Button>
               </div>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Sale Detail Dialog */}
+      <Dialog open={!!detailSale} onOpenChange={() => setDetailSale(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Sale Details</DialogTitle></DialogHeader>
+          {detailSale && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs text-muted-foreground">Customer</p>
+                  {editingSale ? (
+                    <Input value={editingSale.customer_name} onChange={e => setEditingSale({ ...editingSale, customer_name: e.target.value })} />
+                  ) : (
+                    <p className="font-semibold">{detailSale.customer_name}</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Status</p>
+                  {editingSale ? (
+                    <Select value={editingSale.payment_status} onValueChange={v => setEditingSale({ ...editingSale, payment_status: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="partial">Partial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Badge variant={detailSale.payment_status === "paid" ? "default" : "outline"}
+                      className={detailSale.payment_status === "paid" ? "bg-success" : detailSale.payment_status === "pending" ? "border-warning/50 text-warning" : "border-primary/50 text-primary"}>
+                      {detailSale.payment_status.charAt(0).toUpperCase() + detailSale.payment_status.slice(1)}
+                    </Badge>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Date</p>
+                  <p className="font-medium">{new Date(detailSale.created_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Amount</p>
+                  <p className="text-xl font-bold text-primary">${Math.round(Number(detailSale.total_amount))}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div>
+                <p className="text-sm font-semibold mb-2">Items Sold</p>
+                <div className="space-y-2">
+                  {detailSale.sale_items?.map((si: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center p-2 rounded-md bg-muted/30">
+                      <div>
+                        <p className="font-medium text-sm">{si.products?.name || "Unknown"}</p>
+                        <p className="text-xs text-muted-foreground">Qty: {si.quantity} × ${Math.round(Number(si.unit_price))}</p>
+                      </div>
+                      <p className="font-semibold">${Math.round(si.quantity * Number(si.unit_price))}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                {editingSale ? (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => setEditingSale(null)}>Cancel</Button>
+                    <Button size="sm" onClick={() => {
+                      updateStatus.mutate({ id: editingSale.id, payment_status: editingSale.payment_status });
+                      setDetailSale({ ...detailSale, payment_status: editingSale.payment_status, customer_name: editingSale.customer_name });
+                      setEditingSale(null);
+                    }}>Save</Button>
+                  </>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setEditingSale({ ...detailSale })}>
+                    <Pencil className="mr-1 h-3 w-3" /> Edit
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -179,6 +279,7 @@ export default function Sales() {
                   <TableHead className="text-right font-semibold">Total</TableHead>
                   <TableHead className="font-semibold">Status</TableHead>
                   <TableHead className="font-semibold">Date</TableHead>
+                  <TableHead className="font-semibold text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -186,7 +287,7 @@ export default function Sales() {
                   <TableRow key={s.id} className="hover:bg-accent/50 transition-colors">
                     <TableCell className="font-medium">{s.customer_name}</TableCell>
                     <TableCell className="text-right">{s.sale_items?.length || 0}</TableCell>
-                    <TableCell className="text-right font-semibold">${Number(s.total_amount).toFixed(2)}</TableCell>
+                    <TableCell className="text-right font-semibold">${Math.round(Number(s.total_amount))}</TableCell>
                     <TableCell>
                       <Select value={s.payment_status} onValueChange={v => updateStatus.mutate({ id: s.id, payment_status: v })}>
                         <SelectTrigger className="h-7 w-24 text-xs border-none bg-transparent p-0">
@@ -199,11 +300,16 @@ export default function Sales() {
                       </Select>
                     </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</TableCell>
+                    <TableCell className="text-center">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailSale(s)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {sales.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5}>
+                    <TableCell colSpan={6}>
                       <div className="empty-state">
                         <ShoppingCart className="empty-state-icon" />
                         <p className="text-sm text-muted-foreground">No sales yet</p>
