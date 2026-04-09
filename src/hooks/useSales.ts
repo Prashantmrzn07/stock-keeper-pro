@@ -68,11 +68,13 @@ export function useCreateSale() {
 export function useUpdateSaleStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, payment_status }: { id: string; payment_status: string }) => {
-      const { error } = await supabase.from("sales").update({ payment_status }).eq("id", id);
+    mutationFn: async ({ id, payment_status, customer_name }: { id: string; payment_status: string; customer_name?: string }) => {
+      const updates: any = { payment_status };
+      if (customer_name !== undefined) updates.customer_name = customer_name;
+      const { error } = await supabase.from("sales").update(updates).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales"] }); toast.success("Status updated"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales"] }); toast.success("Sale updated"); },
     onError: (e) => toast.error(e.message),
   });
 }
