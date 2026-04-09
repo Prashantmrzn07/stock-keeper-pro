@@ -1,10 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, User, Settings, LogOut, Package, AlertTriangle } from "lucide-react";
+import { Bell, User, Settings, LogOut, Package, AlertTriangle, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
+import { useStockMovements } from "@/hooks/useStockMovements";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -19,10 +20,15 @@ export function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: products } = useProducts();
+  const { data: movements = [] } = useStockMovements();
 
   const lowStockItems = products?.filter(p => p.stock <= p.reorder_level) ?? [];
   const outOfStockItems = products?.filter(p => p.stock === 0) ?? [];
-  const alertCount = lowStockItems.length;
+  const recentArrivals = (movements as any[]).filter((m: any) => {
+    const hourAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return m.type === "in" && new Date(m.created_at) > hourAgo;
+  }).slice(0, 5);
+  const alertCount = lowStockItems.length + recentArrivals.length;
 
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
@@ -57,7 +63,10 @@ export function AppLayout() {
                 <PopoverContent align="end" className="w-80 p-0 shadow-xl">
                   <div className="p-3 border-b">
                     <p className="text-sm font-semibold">Notifications</p>
-                    <p className="text-xs text-muted-foreground">{alertCount} stock alert{alertCount !== 1 ? "s" : ""}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {lowStockItems.length} stock alert{lowStockItems.length !== 1 ? "s" : ""}
+                      {recentArrivals.length > 0 && ` · ${recentArrivals.length} arrival${recentArrivals.length !== 1 ? "s" : ""}`}
+                    </p>
                   </div>
                   <div className="max-h-64 overflow-auto">
                     {alertCount === 0 ? (
@@ -89,6 +98,23 @@ export function AppLayout() {
                             <Badge variant="secondary" className="ml-auto shrink-0 text-[10px]">{p.stock}</Badge>
                           </button>
                         ))}
+                        {recentArrivals.length > 0 && (
+                          <>
+                            <div className="px-3 py-1.5 bg-success/5 border-t border-b border-success/10">
+                              <p className="text-[10px] font-semibold text-success uppercase tracking-wider">Stock Arrivals (24h)</p>
+                            </div>
+                            {recentArrivals.map((m: any) => (
+                              <button key={m.id} onClick={() => navigate("/stock")} className="flex items-start gap-3 w-full p-3 hover:bg-accent/50 text-left transition-colors">
+                                <ArrowDown className="h-4 w-4 mt-0.5 text-success shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate">{m.products?.name || "Product"}</p>
+                                  <p className="text-xs text-success">+{m.quantity} units arrived</p>
+                                </div>
+                                <Badge variant="secondary" className="ml-auto shrink-0 text-[10px] bg-success/10 text-success border-success/20">+{m.quantity}</Badge>
+                              </button>
+                            ))}
+                          </>
+                        )}
                       </>
                     )}
                   </div>

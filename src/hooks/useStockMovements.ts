@@ -41,10 +41,22 @@ export function useCreateStockMovement() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ["stock_movements"] });
       qc.invalidateQueries({ queryKey: ["products"] });
-      toast.success("Stock updated");
+      if (variables.type === "in") {
+        toast.success("Stock Arrived!", {
+          description: `${variables.quantity} units added to inventory successfully.`,
+        });
+      } else if (variables.type === "out") {
+        toast.success("Stock Removed", {
+          description: `${variables.quantity} units removed from inventory.`,
+        });
+      } else {
+        toast.success("Stock Adjusted", {
+          description: `Stock level adjusted to ${variables.quantity} units.`,
+        });
+      }
     },
     onError: (e) => toast.error(e.message),
   });
