@@ -1,10 +1,11 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Outlet, useNavigate } from "react-router-dom";
-import { Bell, User, Settings, LogOut, Package, AlertTriangle } from "lucide-react";
+import { Bell, User, Settings, LogOut, Package, AlertTriangle, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProducts } from "@/hooks/useProducts";
+import { useStockMovements } from "@/hooks/useStockMovements";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -19,10 +20,15 @@ export function AppLayout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { data: products } = useProducts();
+  const { data: movements = [] } = useStockMovements();
 
   const lowStockItems = products?.filter(p => p.stock <= p.reorder_level) ?? [];
   const outOfStockItems = products?.filter(p => p.stock === 0) ?? [];
-  const alertCount = lowStockItems.length;
+  const recentArrivals = (movements as any[]).filter((m: any) => {
+    const hourAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return m.type === "in" && new Date(m.created_at) > hourAgo;
+  }).slice(0, 5);
+  const alertCount = lowStockItems.length + recentArrivals.length;
 
   const initials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
