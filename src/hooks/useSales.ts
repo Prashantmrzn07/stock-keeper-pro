@@ -78,3 +78,17 @@ export function useUpdateSaleStatus() {
     onError: (e) => toast.error(e.message),
   });
 }
+
+export function useDeleteSale() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error: itemsError } = await supabase.from("sale_items").delete().eq("sale_id", id);
+      if (itemsError) throw itemsError;
+      const { error } = await supabase.from("sales").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["sales"] }); toast.success("Sale deleted"); },
+    onError: (e) => toast.error(e.message),
+  });
+}
