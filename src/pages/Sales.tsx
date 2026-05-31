@@ -28,6 +28,7 @@ export default function Sales() {
   const { data: products = [] } = useProducts();
   const createSale = useCreateSale();
   const updateStatus = useUpdateSaleStatus();
+  const deleteSale = useDeleteSale();
 
   const totalRevenue = sales.reduce((s: number, sale: any) => s + Number(sale.total_amount), 0);
   const avgOrder = sales.length > 0 ? totalRevenue / sales.length : 0;
@@ -302,9 +303,35 @@ export default function Sales() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{new Date(s.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</TableCell>
                     <TableCell className="text-center">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailSale(s)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-center gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDetailSale(s)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete this sale?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently remove the sale for <span className="font-semibold">{s.customer_name}</span> and all its items. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteSale.mutate(s.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
