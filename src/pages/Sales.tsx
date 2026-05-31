@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, DollarSign, ShoppingCart, TrendingUp, Percent, Eye, Pencil, X } from "lucide-react";
+import { Plus, DollarSign, ShoppingCart, TrendingUp, Percent, Eye, Pencil, X, Trash2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { useSales, useCreateSale, useUpdateSaleStatus } from "@/hooks/useSales";
+import { useSales, useCreateSale, useUpdateSaleStatus, useDeleteSale } from "@/hooks/useSales";
 import { useProducts } from "@/hooks/useProducts";
 
 interface SaleLineItem { product_id: string; quantity: number; unit_price: number; discount: number; }
