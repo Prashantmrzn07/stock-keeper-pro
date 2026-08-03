@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { SmokeBackground } from "@/components/ui/spooky-smoke-animation";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const isLogin = mode === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -20,7 +21,14 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Password reset link sent — check your email!");
+        setMode("login");
+      } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in successfully");
@@ -41,29 +49,41 @@ export default function Auth() {
     }
   };
 
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[hsl(220,20%,6%)] p-4 overflow-hidden">
       <SmokeBackground smokeColor="#1e40af" />
       <Card className="relative z-10 w-full max-w-md border-primary/20 bg-[hsl(220,25%,10%)]/90 backdrop-blur-xl shadow-2xl shadow-primary/10">
         <CardHeader className="text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">IV</div>
-          <CardTitle className="text-xl text-[hsl(210,20%,95%)]">{isLogin ? "Sign in to InvenTrack" : "Create an account"}</CardTitle>
-          <p className="text-sm text-[hsl(215,20%,55%)]">Inventory management made simple</p>
+          <CardTitle className="text-xl text-[hsl(210,20%,95%)]">{mode === "forgot" ? "Reset your password" : isLogin ? "Sign in to InvenTrack" : "Create an account"}</CardTitle>
+          <p className="text-sm text-[hsl(215,20%,55%)]">{mode === "forgot" ? "We'll email you a reset link" : "Inventory management made simple"}</p>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
+            {mode === "signup" && (
               <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Full Name</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" placeholder="John Doe" value={name} onChange={e => setName(e.target.value)} required /></div>
             )}
             <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Email</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} required /></div>
-            <div className="space-y-2"><Label className="text-[hsl(215,20%,75%)]">Password</Label><Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} /></div>
-            <Button className="w-full" type="submit" disabled={loading}>{loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}</Button>
+            {mode !== "forgot" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-[hsl(215,20%,75%)]">Password</Label>
+                  {isLogin && (
+                    <button type="button" onClick={() => setMode("forgot")} className="text-xs text-primary underline-offset-4 hover:underline">Forgot password?</button>
+                  )}
+                </div>
+                <Input className="border-primary/20 bg-[hsl(220,25%,14%)] text-[hsl(210,20%,95%)] placeholder:text-[hsl(215,20%,40%)]" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required minLength={6} />
+              </div>
+            )}
+            <Button className="w-full" type="submit" disabled={loading}>{loading ? "Please wait..." : mode === "forgot" ? "Send reset link" : isLogin ? "Sign In" : "Sign Up"}</Button>
             <p className="text-center text-sm text-[hsl(215,20%,55%)]">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary underline-offset-4 hover:underline">
-                {isLogin ? "Sign up" : "Sign in"}
+              {mode === "forgot" ? "Remembered it? " : isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button type="button" onClick={() => setMode(mode === "login" ? "signup" : "login")} className="text-primary underline-offset-4 hover:underline">
+                {mode === "login" ? "Sign up" : "Sign in"}
               </button>
             </p>
+
           </form>
         </CardContent>
       </Card>
