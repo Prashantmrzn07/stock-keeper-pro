@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { SmokeBackground } from "@/components/ui/spooky-smoke-animation";
 
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<"login" | "signup" | "forgot">("login");
+  const isLogin = mode === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -20,7 +21,14 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
+      if (mode === "forgot") {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) throw error;
+        toast.success("Password reset link sent — check your email!");
+        setMode("login");
+      } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Signed in successfully");
@@ -40,6 +48,7 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-[hsl(220,20%,6%)] p-4 overflow-hidden">
