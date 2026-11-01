@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Edit2, Trash2, Tags, FolderOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Edit2, Trash2, Tags, FolderOpen, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory,
 import { useProducts } from "@/hooks/useProducts";
 
 export default function Categories() {
+  const navigate = useNavigate();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editCat, setEditCat] = useState<Category | undefined>();
   const [name, setName] = useState("");
@@ -25,6 +27,7 @@ export default function Categories() {
 
   const openEdit = (c: Category) => { setEditCat(c); setName(c.name); setDesc(c.description); setDialogOpen(true); };
   const openCreate = () => { setEditCat(undefined); setName(""); setDesc(""); setDialogOpen(true); };
+  const openProducts = (id: string) => navigate(`/products?category=${id}`);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +47,7 @@ export default function Categories() {
           </div>
           <div>
             <h1>Categories</h1>
-            <p>Organize products by category</p>
+            <p>Click a category to see its products</p>
           </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -64,7 +67,7 @@ export default function Categories() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}</div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}</div>
       ) : categories.length === 0 ? (
         <Card className="shadow-sm">
           <CardContent>
@@ -78,21 +81,30 @@ export default function Categories() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => {
-            const count = products.filter(p => p.category_id === c.id).length;
+            const items = products.filter(p => p.category_id === c.id);
+            const count = items.length;
             return (
-              <Card key={c.id} className="group shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 overflow-hidden">
+              <Card
+                key={c.id}
+                role="link"
+                tabIndex={0}
+                aria-label={`View products in ${c.name}`}
+                onClick={() => openProducts(c.id)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openProducts(c.id); } }}
+                className="group shadow-sm hover:shadow-lg hover:shadow-primary/10 transition-all hover:-translate-y-0.5 overflow-hidden cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
                 <CardContent className="p-5 relative">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                         <Tags className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">{c.name}</h3>
+                        <h3 className="font-semibold group-hover:text-primary transition-colors">{c.name}</h3>
                         <p className="text-xs text-muted-foreground line-clamp-1">{c.description || "No description"}</p>
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(c)}><Edit2 className="h-3.5 w-3.5" /></Button>
                       <AlertDialog>
                         <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></AlertDialogTrigger>
@@ -103,10 +115,26 @@ export default function Categories() {
                       </AlertDialog>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 mt-4">
+
+                  {count > 0 && (
+                    <div className="space-y-1 mb-3">
+                      {items.slice(0, 3).map(p => (
+                        <div key={p.id} className="flex items-center justify-between text-xs">
+                          <span className="truncate text-muted-foreground group-hover:text-foreground transition-colors">{p.name}</span>
+                          <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground/70">{p.stock}</span>
+                        </div>
+                      ))}
+                      {count > 3 && <p className="text-[11px] text-muted-foreground/70">+{count - 3} more</p>}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-4">
                     <Badge variant="secondary" className="text-xs">{count} product{count !== 1 ? "s" : ""}</Badge>
+                    <span className="inline-flex items-center gap-0.5 text-xs font-medium text-primary opacity-60 group-hover:opacity-100 transition-opacity">
+                      View products <ChevronRight className="h-3.5 w-3.5" />
+                    </span>
                   </div>
-                  <div className="absolute bottom-0 left-0 h-1 w-full gradient-purple opacity-40" />
+                  <div className="absolute bottom-0 left-0 h-1 w-full gradient-purple opacity-40 group-hover:opacity-80 transition-opacity" />
                 </CardContent>
               </Card>
             );

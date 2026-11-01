@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Search, Plus, Download, Trash2, Edit2, Package } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { Search, Plus, Download, Trash2, Edit2, Package, X, Tags } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,16 +19,17 @@ function generateSKU() {
   return "SKU-" + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-function ProductForm({ product, categories, suppliers, onSubmit, onCancel }: {
+function ProductForm({ product, categories, suppliers, defaultCategoryId, onSubmit, onCancel }: {
   product?: Product;
   categories: { id: string; name: string }[];
   suppliers: { id: string; name: string }[];
+  defaultCategoryId?: string;
   onSubmit: (data: any) => void;
   onCancel: () => void;
 }) {
   const [form, setForm] = useState({
     name: product?.name || "", sku: product?.sku || generateSKU(),
-    category_id: product?.category_id || "", supplier_id: product?.supplier_id || "",
+    category_id: product?.category_id || defaultCategoryId || "", supplier_id: product?.supplier_id || "",
     description: product?.description || "", unit_price: product?.unit_price || 0,
     cost_price: product?.cost_price || 0, stock: product?.stock || 0,
     reorder_level: product?.reorder_level || 10, image_url: product?.image_url || "",
@@ -79,9 +81,9 @@ function ProductForm({ product, categories, suppliers, onSubmit, onCancel }: {
 
 export default function Products() {
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | undefined>();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
@@ -89,6 +91,19 @@ export default function Products() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
+
+  // Category comes from the URL so it can be opened straight from a category card.
+  const requested = searchParams.get("category");
+  const activeCategory = requested ? categories.find(c => c.id === requested) : undefined;
+  const categoryFilter = activeCategory ? activeCategory.id : "all";
+
+  const setCategoryFilter = (value: string) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (value === "all") next.delete("category"); else next.set("category", value);
+      return next;
+    }, { replace: true });
+  };
 
   const filtered = products.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku.toLowerCase().includes(search.toLowerCase());
@@ -129,8 +144,8 @@ export default function Products() {
             <Package className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1>Products</h1>
-            <p>{filtered.length} products found</p>
+            <h1>{activeCategory ? activeCategory.name : "Products"}</h1>
+            <p>{activeCategory ? `${filtered.length} product${filtered.length !== 1 ? "s" : ""} in this category` : `${filtered.length} products found`}</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -139,11 +154,26 @@ export default function Products() {
             <DialogTrigger asChild><Button size="sm" className="shadow-md shadow-primary/20"><Plus className="mr-1 h-4 w-4" /> Add Product</Button></DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader><DialogTitle>{editProduct ? "Edit Product" : "Add Product"}</DialogTitle></DialogHeader>
-              <ProductForm product={editProduct} categories={categories} suppliers={suppliers} onSubmit={handleSubmit} onCancel={() => { setDialogOpen(false); setEditProduct(undefined); }} />
+              <ProductForm key={activeCategory?.id || "all"} product={editProduct} categories={categories} suppliers={suppliers} defaultCategoryId={activeCategory?.id} onSubmit={handleSubmit} onCancel={() => { setDialogOpen(false); setEditProduct(undefined); }} />
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+      {activeCategory && (
+        <div className="glass-card flex items-center justify-between gap-3 rounded-xl border-primary/20 bg-primary/5 px-4 py-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <Tags className="h-4 w-4 shrink-0 text-primary" />
+            <span className="truncate text-sm">
+              Showing products in <span className="font-semibold text-primary">{activeCategory.name}</span>
+              {activeCategory.description ? <span className="text-muted-foreground"> — {activeCategory.description}</span> : null}
+            </span>
+          </div>
+          <Button variant="ghost" size="sm" className="shrink-0 h-8 text-xs" onClick={() => setCategoryFilter("all")}>
+            <X className="mr-1 h-3.5 w-3.5" /> Clear filter
+          </Button>
+        </div>
+      )}
 
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
@@ -205,7 +235,14 @@ export default function Products() {
                     <TableCell colSpan={6}>
                       <div className="empty-state">
                         <Package className="empty-state-icon" />
-                        <p className="text-sm text-muted-foreground">No products found</p>
+                        <p className="text-sm text-muted-foreground">
+                          {activeCategory ? `No products in ${activeCategory.name} yet` : "No products found"}
+                        </p>
+                        {activeCategory && (
+                          <Button size="sm" className="mt-3" onClick={() => setDialogOpen(true)}>
+                            <Plus className="mr-1 h-4 w-4" /> Add product to {activeCategory.name}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
