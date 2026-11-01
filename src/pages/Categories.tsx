@@ -67,7 +67,7 @@ export default function Categories() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-44 w-full rounded-xl" />)}</div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{[1,2,3].map(i => <Skeleton key={i} className="h-36 w-full rounded-xl" />)}</div>
       ) : categories.length === 0 ? (
         <Card className="shadow-sm">
           <CardContent>
@@ -81,8 +81,7 @@ export default function Categories() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((c) => {
-            const items = products.filter(p => p.category_id === c.id);
-            const count = items.length;
+            const count = products.filter(p => p.category_id === c.id).length;
             return (
               <Card
                 key={c.id}
@@ -115,18 +114,6 @@ export default function Categories() {
                       </AlertDialog>
                     </div>
                   </div>
-
-                  {count > 0 && (
-                    <div className="space-y-1 mb-3">
-                      {items.slice(0, 3).map(p => (
-                        <div key={p.id} className="flex items-center justify-between text-xs">
-                          <span className="truncate text-muted-foreground group-hover:text-foreground transition-colors">{p.name}</span>
-                          <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground/70">{p.stock}</span>
-                        </div>
-                      ))}
-                      {count > 3 && <p className="text-[11px] text-muted-foreground/70">+{count - 3} more</p>}
-                    </div>
-                  )}
 
                   <div className="flex items-center justify-between mt-4">
                     <Badge variant="secondary" className="text-xs">{count} product{count !== 1 ? "s" : ""}</Badge>
