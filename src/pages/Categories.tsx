@@ -130,7 +130,7 @@ export default function Categories() {
 
                   <div className="flex items-center justify-between mt-4">
                     <Badge variant="secondary" className="text-xs">{count} product{count !== 1 ? "s" : ""}</Badge>
-                    <span className="inline-flex items-center gap-0.5 text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="inline-flex items-center gap-0.5 text-xs font-medium text-primary opacity-60 group-hover:opacity-100 transition-opacity">
                       View products <ChevronRight className="h-3.5 w-3.5" />
                     </span>
                   </div>
