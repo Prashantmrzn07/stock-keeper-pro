@@ -1,6 +1,7 @@
-import { Package, AlertTriangle, XCircle, DollarSign, ArrowDown, ArrowUp, TrendingUp, Activity } from "lucide-react";
+import { Package, AlertTriangle, XCircle, DollarSign, ArrowDown, ArrowUp, TrendingUp, Activity, ChevronRight } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProducts } from "@/hooks/useProducts";
@@ -10,6 +11,7 @@ import { useMemo } from "react";
 export default function Dashboard() {
   const { data: products = [], isLoading: productsLoading } = useProducts();
   const { data: movements = [], isLoading: movementsLoading } = useStockMovements();
+  const navigate = useNavigate();
 
   const totalProducts = products.length;
   const lowStock = products.filter(p => p.stock > 0 && p.stock <= p.reorder_level).length;
@@ -37,13 +39,16 @@ export default function Dashboard() {
   }, [movements]);
 
   const metrics = [
-    { title: "Total Products", value: totalProducts, icon: Package, gradient: "gradient-primary", iconBg: "bg-primary/10 text-primary" },
-    { title: "Low Stock", value: lowStock, icon: AlertTriangle, gradient: "gradient-warning", iconBg: "bg-warning/10 text-warning" },
-    { title: "Out of Stock", value: outOfStock, icon: XCircle, gradient: "gradient-destructive", iconBg: "bg-destructive/10 text-destructive" },
-    { title: "Inventory Value", value: `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: DollarSign, gradient: "gradient-success", iconBg: "bg-success/10 text-success" },
+    { title: "Total Products", value: totalProducts, icon: Package, gradient: "gradient-primary", iconBg: "bg-primary/10 text-primary", to: "/products", cta: "View products" },
+    { title: "Low Stock", value: lowStock, icon: AlertTriangle, gradient: "gradient-warning", iconBg: "bg-warning/10 text-warning", to: "/low-stock", cta: "View alerts" },
+    { title: "Out of Stock", value: outOfStock, icon: XCircle, gradient: "gradient-destructive", iconBg: "bg-destructive/10 text-destructive", to: "/low-stock?status=out", cta: "See empty items" },
+    { title: "Inventory Value", value: `$${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`, icon: DollarSign, gradient: "gradient-success", iconBg: "bg-success/10 text-success", to: "/reports", cta: "Open reports" },
   ];
 
   const loading = productsLoading || movementsLoading;
+  const alertProducts = products.filter(p => p.stock <= p.reorder_level);
+
+  const cardLink = "text-xs font-medium text-primary hover:text-primary/80 inline-flex items-center gap-0.5 transition-colors";
 
   return (
     <div className="space-y-8 animate-fade-in page-bg-glow">
@@ -61,7 +66,7 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {metrics.map((m) => (
-          <div key={m.title} className="metric-card group">
+          <Link key={m.title} to={m.to} className="metric-card group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
             <div className="flex items-center gap-4">
               <div className={`rounded-xl p-3 ${m.iconBg} transition-transform group-hover:scale-110`}>
                 <m.icon className="h-5 w-5" />
@@ -71,8 +76,12 @@ export default function Dashboard() {
                 {loading ? <Skeleton className="h-8 w-20 mt-1" /> : <p className="text-2xl font-bold tracking-tight">{m.value}</p>}
               </div>
             </div>
+            <p className="mt-3 inline-flex items-center gap-0.5 text-xs font-medium text-muted-foreground transition-colors group-hover:text-primary">
+              {m.cta}
+              <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </p>
             <div className={`absolute bottom-0 left-0 h-1 w-full ${m.gradient} opacity-60`} />
-          </div>
+          </Link>
         ))}
       </div>
 
@@ -81,7 +90,10 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Stock Movement</CardTitle>
-              <Badge variant="secondary" className="text-xs font-normal">Last 7 Days</Badge>
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="text-xs font-normal">Last 7 Days</Badge>
+                <Link to="/stock" className={cardLink}>Manage stock<ChevronRight className="h-3 w-3" /></Link>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -110,22 +122,33 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">Low Stock Alerts</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-warning" />
+              <div className="flex items-center gap-2">
+                <Link to="/low-stock" className={cardLink}>View all<ChevronRight className="h-3 w-3" /></Link>
+                <AlertTriangle className="h-4 w-4 text-warning" />
+              </div>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {products.filter(p => p.stock <= p.reorder_level).slice(0, 5).map(p => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg border border-border/50 p-3 hover:bg-accent/50 transition-colors">
+            {alertProducts.slice(0, 5).map(p => (
+              <button
+                key={p.id}
+                onClick={() => navigate(`/products?search=${encodeURIComponent(p.sku)}`)}
+                aria-label={`View ${p.name} in products`}
+                className="flex items-center justify-between gap-2 w-full text-left rounded-lg border border-border/50 p-3 hover:bg-accent/50 hover:border-primary/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{p.name}</p>
                   <p className="text-xs text-muted-foreground font-mono">{p.sku}</p>
                 </div>
-                <Badge variant={p.stock === 0 ? "destructive" : "outline"} className={p.stock > 0 ? "border-warning/50 text-warning bg-warning/5" : ""}>
-                  {p.stock === 0 ? "Out of stock" : `${p.stock} left`}
-                </Badge>
-              </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Badge variant={p.stock === 0 ? "destructive" : "outline"} className={p.stock > 0 ? "border-warning/50 text-warning bg-warning/5" : ""}>
+                    {p.stock === 0 ? "Out of stock" : `${p.stock} left`}
+                  </Badge>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                </div>
+              </button>
             ))}
-            {products.filter(p => p.stock <= p.reorder_level).length === 0 && (
+            {alertProducts.length === 0 && (
               <div className="empty-state py-8">
                 <Package className="empty-state-icon" />
                 <p className="text-sm text-muted-foreground">All items well-stocked!</p>
@@ -139,13 +162,21 @@ export default function Dashboard() {
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-            <Badge variant="secondary" className="text-xs font-normal">{movements.length} total</Badge>
+            <div className="flex items-center gap-3">
+              <Badge variant="secondary" className="text-xs font-normal">{movements.length} total</Badge>
+              <Link to="/stock" className={cardLink}>View all movements<ChevronRight className="h-3 w-3" /></Link>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
             {movements.slice(0, 5).map((m: any) => (
-              <div key={m.id} className="flex items-center gap-3 rounded-lg border border-border/50 p-3 hover:bg-accent/50 transition-colors">
+              <button
+                key={m.id}
+                onClick={() => navigate("/stock")}
+                aria-label="View stock movements"
+                className="flex items-center gap-3 w-full text-left rounded-lg border border-border/50 p-3 hover:bg-accent/50 hover:border-primary/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <div className={`rounded-xl p-2 ${m.type === "in" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
                   {m.type === "in" ? <ArrowDown className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
                 </div>
@@ -154,7 +185,8 @@ export default function Dashboard() {
                   <p className="text-xs text-muted-foreground">{new Date(m.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
                 </div>
                 <Badge variant="secondary" className="text-xs">{m.type === "in" ? "IN" : "OUT"}</Badge>
-              </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+              </button>
             ))}
             {movements.length === 0 && (
               <div className="empty-state py-8">
