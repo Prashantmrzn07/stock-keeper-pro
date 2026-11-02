@@ -21,7 +21,8 @@ describe("Nepal phone standard", () => {
   it("accepts Kathmandu and Pokhara landlines", () => {
     expect(isValidNepalPhone("01-4567890")).toBe(true);
     expect(isValidNepalPhone("061-456789")).toBe(true);
-    expect(isValidNepalPhone("14567890")).toBe(true);
+    expect(isValidNepalPhone("+977 1 4567890")).toBe(true);
+    expect(isValidNepalPhone("14567890")).toBe(false);
   });
 
   it("rejects foreign, short and landline-looking-but-wrong numbers", () => {

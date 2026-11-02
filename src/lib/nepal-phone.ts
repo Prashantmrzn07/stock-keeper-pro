@@ -3,22 +3,33 @@
  *
  * Mobile: 10 digits starting with 9 (94/95/96/97/98 prefixes), e.g. 9841234567.
  * Landline: national format starting with 0 + area code, e.g. 01-4567890 (Kathmandu),
- * 061-XXXXXXX (Pokhara), 021-XXXXXX (Biratnagar).
+ * 061-456789 (Pokhara), 021-456789 (Biratnagar).
  * International dialling prefix +977 / 00977 is accepted on input.
  */
 
 const MOBILE = /^9[4-9]\d{8}$/;
 const LANDLINE = /^0[1-9]\d{7,8}$/;
 
-/** Strip separators and the Nepal country code, returning bare national digits. */
-export function normalizeNepalPhone(raw: string): string {
+function stripSeparators(raw: string): { digits: string; hadCountryCode: boolean } {
   let digits = (raw || "").replace(/[^\d+]/g, "");
   if (digits.startsWith("+")) digits = digits.slice(1);
   if (digits.startsWith("00")) digits = digits.slice(2);
-  if (digits.startsWith("977") && digits.length > 10) digits = digits.slice(3);
-  digits = digits.replace(/\D/g, "");
-  // Subscriber number without the trunk 0, e.g. "14567890" -> "014567890"
-  if (digits && !digits.startsWith("0") && !digits.startsWith("9")) digits = "0" + digits;
+  let hadCountryCode = false;
+  if (digits.startsWith("977") && digits.length > 10) {
+    digits = digits.slice(3);
+    hadCountryCode = true;
+  }
+  return { digits: digits.replace(/\D/g, ""), hadCountryCode };
+}
+
+/** Strip separators and the Nepal country code, returning bare national digits. */
+export function normalizeNepalPhone(raw: string): string {
+  const { digits, hadCountryCode } = stripSeparators(raw);
+  // Subscriber number dialled through the country code has no trunk 0:
+  // "+977 1 4567890" -> "014567890". Only applies when +977 was actually typed.
+  if (hadCountryCode && digits && !digits.startsWith("0") && !digits.startsWith("9")) {
+    return "0" + digits;
+  }
   return digits;
 }
 
@@ -57,7 +68,7 @@ export function formatNepalPhone(raw: string): string {
 export function formatNepalPhoneInput(raw: string): string {
   const digits = normalizeNepalPhone(raw);
   if (!digits) return "";
-  if (MOBILE.test(digits) || digits.startsWith("9")) {
+  if (digits.startsWith("9")) {
     return [digits.slice(0, 2), digits.slice(2, 5), digits.slice(5, 10)].filter(Boolean).join(" ");
   }
   if (digits.startsWith("0")) {
