@@ -10,20 +10,46 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSuppliers, useCreateSupplier, useUpdateSupplier, useDeleteSupplier, Supplier } from "@/hooks/useSuppliers";
 import { useProducts } from "@/hooks/useProducts";
+import { formatNepalPhone, formatNepalPhoneInput, isValidNepalPhone } from "@/lib/nepal-phone";
+
+const PHONE_HINT = "Nepal number: 98 412 34567 (mobile) or 01-4567890 (landline)";
 
 function SupplierForm({ supplier, onSubmit, onCancel }: { supplier?: Supplier; onSubmit: (d: any) => void; onCancel: () => void }) {
   const [form, setForm] = useState({
     name: supplier?.name || "", contact: supplier?.contact || "", email: supplier?.email || "",
     phone: supplier?.phone || "", address: supplier?.address || "", payment_terms: supplier?.payment_terms || "",
   });
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSubmit(form); };
+  const [phoneError, setPhoneError] = useState("");
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = formatNepalPhoneInput(e.target.value);
+    setForm(f => ({ ...f, phone: value }));
+    if (phoneError && isValidNepalPhone(value)) setPhoneError("");
+  };
+
+  const handlePhoneBlur = () => {
+    setPhoneError(isValidNepalPhone(form.phone) ? "" : PHONE_HINT);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValidNepalPhone(form.phone)) {
+      setPhoneError(PHONE_HINT);
+      return;
+    }
+    onSubmit({ ...form, phone: formatNepalPhone(form.phone) });
+  };
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2"><Label>Name</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required /></div>
         <div className="space-y-2"><Label>Contact Person</Label><Input value={form.contact} onChange={e => setForm(f => ({ ...f, contact: e.target.value }))} /></div>
         <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} /></div>
-        <div className="space-y-2"><Label>Phone</Label><Input value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
+        <div className="space-y-2">
+          <Label htmlFor="supplier-phone">Phone (Nepal)</Label>
+          <Input id="supplier-phone" inputMode="tel" autoComplete="tel" maxLength={17} placeholder="98 412 34567" value={form.phone} onChange={handlePhoneChange} onBlur={handlePhoneBlur} aria-invalid={!!phoneError} className={phoneError ? "border-destructive" : ""} />
+          <p className={`text-xs ${phoneError ? "text-destructive" : "text-muted-foreground"}`}>{phoneError || PHONE_HINT}</p>
+        </div>
         <div className="space-y-2 sm:col-span-2"><Label>Address</Label><Input value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} /></div>
         <div className="space-y-2 sm:col-span-2"><Label>Payment Terms</Label><Input value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} /></div>
       </div>
@@ -115,7 +141,7 @@ export default function Suppliers() {
                   </div>
                   <div className="mt-4 space-y-2 text-sm">
                     {s.email && <div className="flex items-center gap-2 text-muted-foreground"><Mail className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{s.email}</span></div>}
-                    {s.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" />{s.phone}</div>}
+                    {s.phone && <div className="flex items-center gap-2 text-muted-foreground"><Phone className="h-3.5 w-3.5 shrink-0" />{formatNepalPhone(s.phone)}</div>}
                     {s.address && <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{s.address}</span></div>}
                   </div>
                   <div className="flex items-center gap-2 mt-4">
