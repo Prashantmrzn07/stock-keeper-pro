@@ -1,4 +1,5 @@
-import { AlertTriangle, ShoppingCart, Package } from "lucide-react";
+import { AlertTriangle, ShoppingCart, Package, XCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,20 @@ import { toast } from "sonner";
 
 export default function LowStock() {
   const { data: products = [], isLoading } = useProducts();
-  const lowStockItems = products.filter(p => p.stock <= p.reorder_level);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The dashboard's "Out of Stock" card opens this page pre-filtered.
+  const outOnly = searchParams.get("status") === "out";
+  const allLow = products.filter(p => p.stock <= p.reorder_level);
+  const lowStockItems = outOnly ? allLow.filter(p => p.stock === 0) : allLow;
+
+  const clearFilter = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete("status");
+      return next;
+    }, { replace: true });
+  };
+
 
   const handleGeneratePO = () => {
     const csv = ["Product,SKU,Current Stock,Reorder Level,Suggested Order",
@@ -32,8 +46,9 @@ export default function LowStock() {
             <AlertTriangle className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <h1>Low Stock Alerts</h1>
-            <p>{lowStockItems.length} item{lowStockItems.length !== 1 ? "s" : ""} need attention</p>
+            <h1>{outOnly ? "Out of Stock" : "Low Stock Alerts"}</h1>
+            <p>{lowStockItems.length} item{lowStockItems.length !== 1 ? "s" : ""} {outOnly ? "with no stock left" : "need attention"}</p>
+
           </div>
         </div>
         <Button size="sm" onClick={handleGeneratePO} disabled={lowStockItems.length === 0} className="shadow-md shadow-primary/20">
@@ -41,7 +56,22 @@ export default function LowStock() {
         </Button>
       </div>
 
+      {outOnly && (
+        <div className="glass-card flex items-center justify-between gap-3 rounded-xl border-destructive/30 bg-destructive/5 p-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+              <XCircle className="h-4 w-4" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">out of stock</span> items only.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={clearFilter}>Show all alerts</Button>
+        </div>
+      )}
+
       <Card className="shadow-sm">
+
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-6 space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>

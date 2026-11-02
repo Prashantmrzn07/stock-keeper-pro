@@ -80,10 +80,12 @@ function ProductForm({ product, categories, suppliers, defaultCategoryId, onSubm
 }
 
 export default function Products() {
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // A search term can arrive from the URL, e.g. when a dashboard alert row is clicked.
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | undefined>();
-  const [searchParams, setSearchParams] = useSearchParams();
+
 
   const { data: products = [], isLoading } = useProducts();
   const { data: categories = [] } = useCategories();
