@@ -15,8 +15,8 @@ export const sampleCategories = [
 ];
 
 export const sampleSuppliers = [
-  { id: "1", name: "TechParts Inc", contact: "John Smith", email: "john@techparts.com", phone: "+1-555-0101", productCount: 5 },
-  { id: "2", name: "FurniSupply Co", contact: "Jane Doe", email: "jane@furnisupply.com", phone: "+1-555-0202", productCount: 3 },
+  { id: "1", name: "TechParts Inc", contact: "John Smith", email: "john@techparts.com", phone: "+977 98 412 34567", productCount: 5 },
+  { id: "2", name: "FurniSupply Co", contact: "Jane Doe", email: "jane@furnisupply.com", phone: "01-4567890", productCount: 3 },
 ];
 
 export const sampleStockMovements = [
