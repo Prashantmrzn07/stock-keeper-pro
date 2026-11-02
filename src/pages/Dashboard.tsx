@@ -1,4 +1,4 @@
-import { Package, AlertTriangle, XCircle, DollarSign, ArrowDown, ArrowUp, TrendingUp, Activity, ChevronRight } from "lucide-react";
+import { Package, AlertTriangle, XCircle, DollarSign, ArrowDown, ArrowUp, Activity, ChevronRight } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";

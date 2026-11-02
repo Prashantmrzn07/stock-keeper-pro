@@ -1,4 +1,5 @@
-import { AlertTriangle, ShoppingCart, Package } from "lucide-react";
+import { AlertTriangle, ShoppingCart, Package, XCircle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +11,20 @@ import { toast } from "sonner";
 
 export default function LowStock() {
   const { data: products = [], isLoading } = useProducts();
-  const lowStockItems = products.filter(p => p.stock <= p.reorder_level);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The dashboard's "Out of Stock" card opens this page pre-filtered.
+  const outOnly = searchParams.get("status") === "out";
+  const allLow = products.filter(p => p.stock <= p.reorder_level);
+  const lowStockItems = outOnly ? allLow.filter(p => p.stock === 0) : allLow;
+
+  const clearFilter = () => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.delete("status");
+      return next;
+    }, { replace: true });
+  };
+
 
   const handleGeneratePO = () => {
     const csv = ["Product,SKU,Current Stock,Reorder Level,Suggested Order",
